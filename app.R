@@ -17,7 +17,6 @@ library(corrplot)
 stocks <- c("MNST", "PEP", "RYAAY", "ALGT", "AMD", "NVDA")
 sampling <- c("daily", "weekly", "monthly", "quaterly", "yearly")
 marketIndex <- c("^GSPC", "^DJI", "^IXIC")
-shortColNames <- c("Open", "High", "Low", "Close", "Volume", "Adjusted")
 start_date <- as.Date("2010-09-30")
 end_date <- as.Date("2020-11-01")
 arrayColors <- c("goldenrod", "deeppink","darkturquoise","darkorange",
@@ -40,27 +39,16 @@ GSPCMonth <- to.monthly(GSPC)
 DJIMonth <- to.monthly(DJI)
 IXICMonth <- to.monthly(IXIC)
 
-#Change column names
-colnames(MNSTMonth) <- shortColNames
-colnames(PEPMonth) <- shortColNames
-colnames(RYAAYMonth) <- shortColNames
-colnames(ALGTMonth) <- shortColNames
-colnames(AMDMonth) <- shortColNames
-colnames(NVDAMonth) <- shortColNames
-colnames(GSPCMonth) <- shortColNames
-colnames(DJIMonth) <- shortColNames
-colnames(IXICMonth) <- shortColNames
-
 #Pick Adjusted column
-MNSTMonthAdj <- MNSTMonth$Adjusted
-PEPMonthAdj <- PEPMonth$Adjusted
-RYAAYMonthAdj <- RYAAYMonth$Adjusted
-ALGTMonthAdj <- ALGTMonth$Adjusted
-AMDMonthAdj <- AMDMonth$Adjusted
-NVDAMonthAdj <- NVDAMonth$Adjusted
-GSPCMonthAdj <- GSPCMonth$Adjusted
-DJIMonthAdj <- DJIMonth$Adjusted
-IXICMonthAdj <- IXICMonth$Adjusted
+MNSTMonthAdj <- MNSTMonth$MNST.Adjusted
+PEPMonthAdj <- PEPMonth$PEP.Adjusted
+RYAAYMonthAdj <- RYAAYMonth$RYAAY.Adjusted
+ALGTMonthAdj <- ALGTMonth$ALGT.Adjusted
+AMDMonthAdj <- AMDMonth$AMD.Adjusted
+NVDAMonthAdj <- NVDAMonth$NVDA.Adjusted
+GSPCMonthAdj <- GSPCMonth$GSPC.Adjusted
+DJIMonthAdj <- DJIMonth$DJI.Adjusted
+IXICMonthAdj <- IXICMonth$IXIC.Adjusted
 
 #Rename column names
 colnames(MNSTMonthAdj) <- stocks[1]
@@ -96,15 +84,14 @@ colnames(simpleStocksReturnsYear) <- colnames(mergedStocksAdj) <- stocks
 #Compute simple and continuous compound return, omitting NA values
 simpleStocksReturns <- na.omit(CalculateReturns(mergedStocksAdjMonth,
                                                 method = "simple"))
+
 ccStocksReturns <- na.omit(CalculateReturns(mergedStocksAdjMonth,
                                             method = "compound"))
-simpleIndexReturns <- na.omit(CalculateReturns(mergedIndexAdjMonth,
-                                               method = "simple"))
+
 ccIndexReturns <- na.omit(CalculateReturns(mergedIndexAdjMonth,
                                            method = "compound"))
 
-colnames(ccIndexReturns) <- colnames(mergedIndexAdjMonth)<- 
-  colnames(simpleIndexReturns)<- c("S&P 500", "DOW JONES", "NASDAQ")
+colnames(ccIndexReturns) <- colnames(mergedIndexAdjMonth)<- c("S&P 500", "DOW JONES", "NASDAQ")
 
 #Plot all the data in a single graph
 plotSimpleCCReturns <- function(simple, cc, lineColor){
@@ -162,8 +149,6 @@ plotStockIndex <- function(stockData, indexData, lineColor){
   plot.new()
   legend(x="center", ncol=3, c(colnames(stockData), legend=colnames(indexData)[1]),
          fill = c(lineColor, "black"), title = "Data")
-  # dygraph(allData)%>%
-  #   dyRangeSelector(height = 40)
 }
 
 # Beta function to calculate beta value
@@ -205,7 +190,6 @@ betaPlot <- function(stock, marketIndex, lineColor){
   # 
   # print(grafico)
 }
-
 
 getAllStats <- function(data){
   allStats <- matrix(NA, nrow=10, ncol=6)
@@ -279,7 +263,7 @@ plotCorrelationPairs <- function(stockData){
     stocksCorrelation[,i] <- as.numeric(stockData[,i])
   }
   pairs(cbind(stocksCorrelation[,1:dim(stockData)[2]]),  
-        col="dodgerblue2", main="Correlation of ALL STOCKS", )
+        col="dodgerblue2", main="Correlation of all stocks (pairs)", )
 } 
 
 #Forecasting
@@ -297,11 +281,6 @@ arimaForecast <- function(stock, trainingSet, testSet){
   print(accuracy(arma_forecast, returnsTest) )
   print(accuracy(arma_forecast, returnsTest)[2])
 }
-
-
-# for(i in 1:length(stocks)){
-#   arimaForecast(ccStocksReturns[,i], 80, 30)
-# }
 
 # Portfolio Optimization 
 userPortfolioOptimization <- function(stockReturns, budget, dateEnd, stockAdj){
@@ -338,10 +317,28 @@ userPortfolioOptimization <- function(stockReturns, budget, dateEnd, stockAdj){
   }
   print(paste("Il ritorno del portafoglio (ideale) è del:", round((Mop$pm*100),3), 
               "%, con il", round((Mop$ps*100),3), "% di rischio"))
+  print(paste("Su ", budget, "$ di investimento il ritorno ideale è di:", round((Mop$pm),3)*budget+budget, "$"))
   print(paste("Il ritorno del portafoglio (reale) è del:", round((Mop$pm*99),3), 
               "%, con il", round((Mop$ps*100),3), "% di rischio"))
+  print(paste("Su ", budget, "$ di investimento il ritorno reale è di:", round((Mop$pm*0.99),3)*budget+budget, "$"))
   
 }
+
+
+plotSimpleCCReturns(stocks, stocks, arrayColors)
+plotCCReturns(ccStocksReturns)
+printCovariance(ccStocksReturns)
+plotCorrelationData(stocks)
+printUnivariateStatistics(ccStocksReturns)
+for(i in 1:length(stocks)){
+  betaPlot(stocks[i], "NASDAQ", arrayColors)
+  plotStockIndex(stocks[i], "NASDAQ", arrayColors)
+  showDiagnosticPlots(stocks[i], arrayColors[i], complementaryColors[i])
+  arimaForecast(ccStocksReturns[,i], 80, 30)
+}
+plotCorrelationPairs(stocks)
+userPortfolioOptimization(simpleStocksReturnsYear[,c(1,2,5,6)], 10000, end_date-2, mergedStocksAdj[,c(1,2,5,6)])
+
 
 source("./server.R")
 source("./ui.R")

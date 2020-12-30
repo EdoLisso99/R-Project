@@ -1,21 +1,11 @@
 title <- "Progetto Business Intelligence Lissoni Edoardo"
 
 ui <- fluidPage(
-  tags$html(
-    tags$head(
-      tags$link(rel = "stylesheet", type = "text/css", href = "styles.css")
-    ),
-    tags$body(
-      tags$div(class="title",
-        titlePanel(title),
-      ),
-      tags$div(class="navbar",
-               navbarPage( 
-                 title = NULL,
-                 tabPanel(title="Descriptive Analytics",
-                          sidebarLayout( # divides in two section the web page
+  titlePanel(title),
+    navbarPage( title = NULL,
+                tabPanel(title="Descriptive Analytics",
+                         sidebarLayout( # divides in two section the web page
                             sidebarPanel("",
-                                         
                                          checkboxGroupInput(inputId ="stocksCheckBox",
                                                             label="Select stocks:", 
                                                             choices=c("MONSTER BEVERAGE" = stocks[1],
@@ -32,21 +22,23 @@ ui <- fluidPage(
                                                                 "NASDAQ"),
                                                       selected = "NASDAQ"),
                                          
-                                         dateRangeInput(inputId = "dataRangeInput", 
-                                                        label = "Date Range Input", 
-                                                        start = start_date+1, 
-                                                        end = end_date-1),
+                                         # dateRangeInput(inputId = "dataRangeInput", 
+                                         #                label = "Date Range Input", 
+                                         #                start = start_date+1, 
+                                         #                end = end_date-1),
+                                         # 
+                                         # radioButtons(inputId ="samplingPeriodRadioBtn",
+                                         #                    label="Select sampling:", 
+                                         #                    choices=sampling,
+                                         #                    selected = sampling[3]),
                                          
-                                         radioButtons(inputId ="samplingPeriodRadioBtn",
-                                                            label="Select sampling:", 
-                                                            choices=sampling,
-                                                            selected = sampling[3]),
-                                         
-                                         ), # typically used for input from user
+                                         ), 
                             mainPanel("",
-                                      textOutput(outputId = "prova"),
+                                      textOutput(outputId = "dataRangeOut"),
                                       textOutput(outputId = "prova2"),
                                       conditionalPanel(condition = "input.stocksCheckBox.length > 0",
+                                        tags$h4(tags$b(textOutput(outputId = "simpleCCReturnsOut")),
+                                                        style = "text-align: center"),
                                         plotOutput(outputId = "simpleCCReturnsPlot"),
                                         conditionalPanel(condition = "input.stocksCheckBox.length == 1",
                                                          plotOutput(outputId = "betaPlotOut"),
@@ -54,8 +46,11 @@ ui <- fluidPage(
                                                          plotOutput(outputId = "diagnosticPlotOut"),               
                                         ),
                                         conditionalPanel(condition = "input.stocksCheckBox.length > 1",
-                                                         plotOutput(outputId = "corrDataPlotOut"),
                                                          plotOutput(outputId = "correlationPairsPlotOut"),
+                                                         tags$h4(tags$b(textOutput(outputId = "correlationTextOut")),
+                                                                 style = "text-align: center"),
+                                                         tags$div(plotOutput(outputId = "corrDataPlotOut"),
+                                                                  style = "display: flex justify-content: flex-start")
                                         ),
                                       ),
                             ),
@@ -70,9 +65,6 @@ ui <- fluidPage(
                  collapsible = FALSE, fluid = FALSE,
                  theme = NULL, windowTitle = title
                ),
-      ),
-    ),
-  ),
 )
 #icon("database", lib = "font-awesome") # From font-awesome library
 
