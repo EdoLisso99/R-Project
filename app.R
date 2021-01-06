@@ -10,6 +10,7 @@ library(PerformanceAnalytics)
 library(lubridate)
 library(tseries)
 library(corrplot)
+library(shinyjs)
 
 
 
@@ -268,7 +269,7 @@ plotCorrelationPairs <- function(stockData){
 
 #Forecasting
 arimaForecast <- function(stock, trainingSet, testSet){
-  stock <- as.zoo(stock)
+  stock <- as.zoo(ccStocksReturns[,stock])
   returnsTrain <- as.zoo(stock[1:trainingSet])  # Train dataset 90%
   returnsTest <- as.zoo(stock[(trainingSet+1):(trainingSet+testSet)])   # Test dataset 10%
   fit <- arima(returnsTrain, order = c(13,0,15))
@@ -283,7 +284,11 @@ arimaForecast <- function(stock, trainingSet, testSet){
 }
 
 # Portfolio Optimization 
-userPortfolioOptimization <- function(stockReturns, budget, dateEnd, stockAdj){
+userPortfolioOptimization <- function(stockReturns, budget){
+  x <- stockReturns
+  dateEnd <- end_date-2
+  stockReturns <- simpleStocksReturnsYear[,x]
+  stockAdj <- mergedStocksAdj[,x]
   # Markowitz optimal portfolio con impostazioni di default
   Mop <- portfolio.optim( x=stockReturns)
   # costruiamo la frontiera efficiente e poniamo Mop su essa
@@ -324,7 +329,7 @@ userPortfolioOptimization <- function(stockReturns, budget, dateEnd, stockAdj){
   
 }
 
-
+dev.off()
 plotSimpleCCReturns(stocks, stocks, arrayColors)
 plotCCReturns(ccStocksReturns)
 printCovariance(ccStocksReturns)
@@ -334,11 +339,11 @@ for(i in 1:length(stocks)){
   betaPlot(stocks[i], "NASDAQ", arrayColors)
   plotStockIndex(stocks[i], "NASDAQ", arrayColors)
   showDiagnosticPlots(stocks[i], arrayColors[i], complementaryColors[i])
-  arimaForecast(ccStocksReturns[,i], 80, 30)
+  arimaForecast(stocks[i], 80, 30)
 }
 plotCorrelationPairs(stocks)
-userPortfolioOptimization(simpleStocksReturnsYear[,c(1,2,5,6)], 10000, end_date-2, mergedStocksAdj[,c(1,2,5,6)])
-
+# x <- c("PEP", "ALGT", "AMD", "NVDA")
+# userPortfolioOptimization(x, 1000)
 
 source("./server.R")
 source("./ui.R")
