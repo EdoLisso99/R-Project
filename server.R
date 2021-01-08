@@ -55,8 +55,17 @@ server <- function(input, output) {
       output$forecastPlot <- renderPlot(arimaForecast(input$forecastRadioBtn, input$forecastNValue, input$forecastMValue))
       })
     
-    output$showPortfolio <- renderPlot(userPortfolioOptimization(input$portfolioStocksCheckBox, input$portfolioBudget))
+    observeEvent(input$stocksCheckBox, {
+      if(length(input$stocksCheckBox) != 1){
+        shinyjs::disable(id = "indexRadioBtn")
+      }else{
+        shinyjs::enable(id = "indexRadioBtn")
+      }
+    })
     
+    output$showPortfolio <- renderPlot(userPortfolioOptimization(input$portfolioStocksCheckBox))
+    output$portfolioWeights <- renderText(getPortfolioWeigths(input$portfolioBudget, input$portfolioStocksCheckBox))
+
     
 }
 

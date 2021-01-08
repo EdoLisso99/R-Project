@@ -13,7 +13,6 @@ library(corrplot)
 library(shinyjs)
 
 
-
 #Declare variables
 stocks <- c("MNST", "PEP", "RYAAY", "ALGT", "AMD", "NVDA")
 sampling <- c("daily", "weekly", "monthly", "quaterly", "yearly")
@@ -272,23 +271,20 @@ arimaForecast <- function(stock, trainingSet, testSet){
   stock <- as.zoo(ccStocksReturns[,stock])
   returnsTrain <- as.zoo(stock[1:trainingSet])  # Train dataset 90%
   returnsTest <- as.zoo(stock[(trainingSet+1):(trainingSet+testSet)])   # Test dataset 10%
-  fit <- arima(returnsTrain, order = c(13,0,15))
+  fit <- arima(returnsTrain, order = c(12,0,14))
   arma_forecast <- forecast(fit, h = testSet, level = c(95,80))
   par(mfrow=c(1,1))
   plot(arma_forecast, main = paste("ARMA forecasts for", colnames(stock),  "returns"))
   legend("topleft", c("Real","Predict"), col=c("black", "deepskyblue3"), lty=1, lwd = 3 ,title = "Data")
   lines(returnsTest)
-  print("Accuracy:")
-  print(accuracy(arma_forecast, returnsTest) )
-  print(accuracy(arma_forecast, returnsTest)[2])
+  # print("Accuracy:")
+  # print(accuracy(arma_forecast, returnsTest) )
+  # print(accuracy(arma_forecast, returnsTest)[2])
 }
 
 # Portfolio Optimization 
-userPortfolioOptimization <- function(stockReturns, budget){
-  x <- stockReturns
-  dateEnd <- end_date-2
-  stockReturns <- simpleStocksReturnsYear[,x]
-  stockAdj <- mergedStocksAdj[,x]
+userPortfolioOptimization <- function(stockNames){
+  stockReturns <- simpleStocksReturnsYear[,stockNames]
   # Markowitz optimal portfolio con impostazioni di default
   Mop <- portfolio.optim( x=stockReturns)
   # costruiamo la frontiera efficiente e poniamo Mop su essa
@@ -308,43 +304,56 @@ userPortfolioOptimization <- function(stockReturns, budget){
   plot( risk, rs, pch=20, col="blue", xlab="Risk (sigma)", ylab="Return (mean)"
         , main = "Risk-Mean plane", )
   points( Mop$ps, Mop$pm, pch=17, col="red" )
-  shares <- spesa <- c(rep(NA, (dim(stockReturns)[2])))
+}
+
+getPortfolioWeigths <- function(budget, stockNames){
+  dateEnd <- end_date-2
+  stockReturns <- simpleStocksReturnsYear[,stockNames]
+  Mop <- portfolio.optim( x=stockReturns)
+  stockAdj <- mergedStocksAdj[,stockNames]
+  shares <- spesa <- stockInfo <- c(rep(NA, (dim(stockReturns)[2])))
   investimento <- 0
   for(i in 1:(dim(stockReturns)[2])){
     shares[i] <- round(floor((budget * Mop$pw[i])/as.numeric(stockAdj[dateEnd, i])),3)
     spesa[i] <- round(shares[i] * as.numeric(stockAdj[dateEnd, i]), 3)
     investimento <- round((investimento + spesa[i]),3)
-    print(paste(colnames(stockReturns)[i], ":", shares[i], "quote a:",
-                as.numeric(stockAdj[dateEnd, i]), "$ con una spesa di:", spesa[i]))
-    print(paste("Il peso di", colnames(stockReturns)[i], "nel portafoglio è di:",
-                round(Mop$pw[i], 3)))
-    print("------------------------------------------------------------------")
+    x <- paste(colnames(stockReturns)[i], ":", shares[i], "quote a:",
+                round(as.numeric(stockAdj[dateEnd, i]),3), "$ con una spesa di:", spesa[i], "$")
+    y <- paste("Il peso di", colnames(stockReturns)[i], "nel portafoglio è di:",
+                round(Mop$pw[i], 3), "%")
+    z <- "------------------------------------------------------------------"
+    stockInfo[i] <- paste("", x, y, z, sep="\n", collapse ="\n")
   }
-  print(paste("Il ritorno del portafoglio (ideale) è del:", round((Mop$pm*100),3), 
-              "%, con il", round((Mop$ps*100),3), "% di rischio"))
-  print(paste("Su ", budget, "$ di investimento il ritorno ideale è di:", round((Mop$pm),3)*budget+budget, "$"))
-  print(paste("Il ritorno del portafoglio (reale) è del:", round((Mop$pm*99),3), 
-              "%, con il", round((Mop$ps*100),3), "% di rischio"))
-  print(paste("Su ", budget, "$ di investimento il ritorno reale è di:", round((Mop$pm*0.99),3)*budget+budget, "$"))
-  
+  a <- paste("Il ritorno del portafoglio (ideale) è del:", round((Mop$pm*100),3), 
+              "%, con il", round((Mop$ps*100),3), "% di rischio")
+  b <- paste("Su ", budget, "$ di investimento il ritorno ideale è di:", round((Mop$pm),3)*budget+budget, "$")
+  c <- "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+  d <- paste("Il ritorno del portafoglio (reale) è del:", round((Mop$pm*99),3), 
+              "%, con il", round((Mop$ps*100),3), "% di rischio")
+  e <- paste("Su ", budget, "$ di investimento il ritorno reale è di:", round((Mop$pm*0.99),3)*budget+budget, "$")
+  portfolioReturns <- paste("", a, b, c, d, e, "", sep="\n")
+  stockInfo <- c(stockInfo, portfolioReturns)
+  cat(stockInfo)
+  return(stockInfo)
 }
 
-dev.off()
-plotSimpleCCReturns(stocks, stocks, arrayColors)
-plotCCReturns(ccStocksReturns)
-printCovariance(ccStocksReturns)
-plotCorrelationData(stocks)
-printUnivariateStatistics(ccStocksReturns)
-for(i in 1:length(stocks)){
-  betaPlot(stocks[i], "NASDAQ", arrayColors)
-  plotStockIndex(stocks[i], "NASDAQ", arrayColors)
-  showDiagnosticPlots(stocks[i], arrayColors[i], complementaryColors[i])
-  arimaForecast(stocks[i], 80, 30)
-}
-plotCorrelationPairs(stocks)
+# dev.off()
+# plotSimpleCCReturns(stocks, stocks, arrayColors)
+# plotCCReturns(ccStocksReturns)
+# printCovariance(ccStocksReturns)
+# plotCorrelationData(stocks)
+# printUnivariateStatistics(ccStocksReturns)
+# for(i in 1:length(stocks)){
+#   betaPlot(stocks[i], "NASDAQ", arrayColors)
+#   plotStockIndex(stocks[i], "NASDAQ", arrayColors)
+#   showDiagnosticPlots(stocks[i], arrayColors[i], complementaryColors[i])
+#   arimaForecast(stocks[i], 80, 30)
+# }
+# plotCorrelationPairs(stocks)
 # x <- c("PEP", "ALGT", "AMD", "NVDA")
 # userPortfolioOptimization(x, 1000)
 
 source("./server.R")
 source("./ui.R")
 shinyApp(ui = ui, server = server)
+
