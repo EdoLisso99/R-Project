@@ -1,9 +1,0 @@
-{
-    "version": 3,
-    "mappings": "AAAA,AAAA,eAAe,CAAC;EACd,QAAQ,EAAE,mBAAmB;EAC7B,GAAG,EAAE,YAAY;EACjB,IAAI,EAAE,eAAe;CACtB",
-    "sources": [
-        "dygraph.scss"
-    ],
-    "names": [],
-    "file": "dygraph.css"
-}

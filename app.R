@@ -1,6 +1,5 @@
 rm(list=ls())
 graphics.off()
-dev.off()
 cat("\014")
 library(shiny)
 library(forecast)
@@ -12,21 +11,20 @@ library(tseries)
 library(corrplot)
 library(shinyjs)
 
-
 #Declare variables
 stocks <- c("MNST", "PEP", "RYAAY", "ALGT", "AMD", "NVDA")
-sampling <- c("daily", "weekly", "monthly", "quaterly", "yearly")
 marketIndex <- c("^GSPC", "^DJI", "^IXIC")
-start_date <- as.Date("2010-09-30")
-end_date <- as.Date("2020-11-01")
+startDateForecast <- as.Date("2010-09-30")
+startDate <- as.Date("2018-09-30")
+endDate <- as.Date("2020-11-01")
 arrayColors <- c("goldenrod", "deeppink","darkturquoise","darkorange",
                  "royalblue1", "slateblue2")
 complementaryColors <- c("red","cyan3","orangered","springgreen3","gold",
                          "yellow3")
 #Import stocks and index data from Yahoo! Finance
-getSymbols(Symbols = stocks[1:5], from=start_date, to=end_date, src='yahoo')
+getSymbols(Symbols = stocks[1:5], from=startDateForecast, to=endDate, src='yahoo')
 getSymbols(Symbols = c(stocks[6], marketIndex[1:length(marketIndex)]),
-           from=start_date, to=end_date, src='yahoo')
+           from=startDateForecast, to=endDate, src='yahoo')
 
 #Monthly 
 MNSTMonth <- to.monthly(MNST)
@@ -40,42 +38,42 @@ DJIMonth <- to.monthly(DJI)
 IXICMonth <- to.monthly(IXIC)
 
 #Pick Adjusted column
-MNSTMonthAdj <- MNSTMonth$MNST.Adjusted
-PEPMonthAdj <- PEPMonth$PEP.Adjusted
-RYAAYMonthAdj <- RYAAYMonth$RYAAY.Adjusted
-ALGTMonthAdj <- ALGTMonth$ALGT.Adjusted
-AMDMonthAdj <- AMDMonth$AMD.Adjusted
-NVDAMonthAdj <- NVDAMonth$NVDA.Adjusted
-GSPCMonthAdj <- GSPCMonth$GSPC.Adjusted
-DJIMonthAdj <- DJIMonth$DJI.Adjusted
-IXICMonthAdj <- IXICMonth$IXIC.Adjusted
+MNSTMonth <- MNSTMonth$MNST.Adjusted
+PEPMonth <- PEPMonth$PEP.Adjusted
+RYAAYMonth <- RYAAYMonth$RYAAY.Adjusted
+ALGTMonth <- ALGTMonth$ALGT.Adjusted
+AMDMonth <- AMDMonth$AMD.Adjusted
+NVDAMonth <- NVDAMonth$NVDA.Adjusted
+GSPCMonth <- GSPCMonth$GSPC.Adjusted
+DJIMonth <- DJIMonth$DJI.Adjusted
+IXICMonth <- IXICMonth$IXIC.Adjusted
 
 #Rename column names
-colnames(MNSTMonthAdj) <- stocks[1]
-colnames(PEPMonthAdj) <- stocks[2]
-colnames(RYAAYMonthAdj) <- stocks[3]
-colnames(ALGTMonthAdj) <- stocks[4]
-colnames(AMDMonthAdj) <- stocks[5]
-colnames(NVDAMonthAdj) <- stocks[6]
-colnames(GSPCMonthAdj) <- marketIndex[1]
-colnames(DJIMonthAdj) <- marketIndex[2]
-colnames(IXICMonthAdj) <- marketIndex[3]
+colnames(MNSTMonth) <- stocks[1]
+colnames(PEPMonth) <- stocks[2]
+colnames(RYAAYMonth) <- stocks[3]
+colnames(ALGTMonth) <- stocks[4]
+colnames(AMDMonth) <- stocks[5]
+colnames(NVDAMonth) <- stocks[6]
+colnames(GSPCMonth) <- marketIndex[1]
+colnames(DJIMonth) <- marketIndex[2]
+colnames(IXICMonth) <- marketIndex[3]
 
-MNST.r <- periodReturn( x=MNST, period="yearly", subset=paste0(start_date+1,"/",end_date-1) )
-PEP.r <- periodReturn( x=PEP, period="yearly", subset=paste0(start_date+1,"/",end_date-1) )
-RYAAY.r <- periodReturn( x=RYAAY, period="yearly", subset=paste0(start_date+1,"/",end_date-1) )
-ALGT.r <- periodReturn( x=ALGT, period="yearly", subset=paste0(start_date+1,"/",end_date-1) )
-AMD.r <- periodReturn( x=AMD, period="yearly", subset=paste0(start_date+1,"/",end_date-1) )
-NVDA.r <- periodReturn( x=NVDA, period="yearly", subset=paste0(start_date+1,"/",end_date-1) )
+MNST.r <- periodReturn( x=MNST, period="yearly", subset=paste0(startDateForecast+1,"/",endDate-1) )
+PEP.r <- periodReturn( x=PEP, period="yearly", subset=paste0(startDateForecast+1,"/",endDate-1) )
+RYAAY.r <- periodReturn( x=RYAAY, period="yearly", subset=paste0(startDateForecast+1,"/",endDate-1) )
+ALGT.r <- periodReturn( x=ALGT, period="yearly", subset=paste0(startDateForecast+1,"/",endDate-1) )
+AMD.r <- periodReturn( x=AMD, period="yearly", subset=paste0(startDateForecast+1,"/",endDate-1) )
+NVDA.r <- periodReturn( x=NVDA, period="yearly", subset=paste0(startDateForecast+1,"/",endDate-1) )
 
 #Merge only Adjusted column of all stocks and index in one variable
 mergedStocksAdj <- merge(MNST$MNST.Adjusted, PEP$PEP.Adjusted,
                          RYAAY$RYAAY.Adjusted, ALGT$ALGT.Adjusted,
                          AMD$AMD.Adjusted, NVDA$NVDA.Adjusted)
 
-mergedStocksAdjMonth <- merge(MNSTMonthAdj,PEPMonthAdj, RYAAYMonthAdj,
-                              ALGTMonthAdj, AMDMonthAdj, NVDAMonthAdj)
-mergedIndexAdjMonth <- merge(GSPCMonthAdj, DJIMonthAdj, IXICMonthAdj)
+mergedStocksAdjMonth <- merge(MNSTMonth,PEPMonth, RYAAYMonth,
+                              ALGTMonth, AMDMonth, NVDAMonth)
+mergedIndexAdjMonth <- merge(GSPCMonth, DJIMonth, IXICMonth)
 
 simpleStocksReturnsYear <- merge(MNST.r, PEP.r, RYAAY.r, ALGT.r, AMD.r, NVDA.r)
 
@@ -95,8 +93,8 @@ colnames(ccIndexReturns) <- colnames(mergedIndexAdjMonth)<- c("S&P 500", "DOW JO
 
 #Plot all the data in a single graph
 plotSimpleCCReturns <- function(simple, cc, lineColor){
-  simple <- simpleStocksReturns[,simple]
-  ccReturns <- ccStocksReturns[,cc]
+  simple <-  window(x = simpleStocksReturns[,simple], start = startDate, end = endDate)
+  ccReturns <-  window(x = ccStocksReturns[,cc], start = startDate, end = endDate)
   layout(matrix(c(1,2,3,3), ncol=1, byrow=TRUE), heights=c(8, 7, 1))
   simple <- plot(simple, main=paste("Simple returns of all stocks"),
                  col = lineColor)
@@ -111,6 +109,7 @@ plotSimpleCCReturns <- function(simple, cc, lineColor){
 
 #Plot the CC monthly return in only one graph
 plotCCReturns <- function(ccMonth){
+  ccMonth <- window(x = ccMonth, start = startDate, end = endDate)
   dygraph(ccMonth) %>%
     dyOptions(stackedGraph = FALSE, drawAxesAtZero = TRUE, axisLineColor = "red",
               axisTickSize = 5) %>%
@@ -121,6 +120,7 @@ plotCCReturns <- function(ccMonth){
 
 #Covariance of index
 printCovariance <- function(stockData){
+  stockData <- window(x = stockData, start = startDate, end = endDate)
   covarianze <- cov(cbind(stockData[,1:dim(stockData)[2]]))
   print("Covarianze:")
   print(covarianze)
@@ -129,6 +129,7 @@ printCovariance <- function(stockData){
 #Correlation of index
 plotCorrelationData <- function(stockData){
   stockData <- ccStocksReturns[,stockData]
+  stockData <- window(x = stockData, start = startDate, end = endDate)
   correlazioni <- cor(cbind(stockData[,1:dim(stockData)[2]]))
   # print("Correlazioni:")
   # print(correlazioni)
@@ -140,10 +141,12 @@ plotCorrelationData <- function(stockData){
 plotStockIndex <- function(stockData, indexData, lineColor){
   stockData <- ccStocksReturns[,stockData]
   indexData <- ccIndexReturns[, indexData]
+  stockData <- window(x = stockData, start = startDate, end = endDate)
+  indexData <- window(x = indexData, start = startDate, end = endDate)
   allData <- merge(stockData, indexData)
   names <- c(colnames(stockData)[1], colnames(indexData)[1])
   layout(matrix(c(1,2), ncol=1, byrow=TRUE), heights=c(8, 2))
-  graph <- plot(allData, main = "Stock and index comparison", col = c(lineColor, "black"))
+  graph <- plot(allData, main = paste(colnames(stockData),  "and", colnames(indexData),  "comparison"), col = c(lineColor, "black"))
   print(graph)
   par(mai=rep(0,4))
   plot.new()
@@ -159,9 +162,11 @@ beta_function <- function(stock, market_index){
 
 betaPlot <- function(stock, marketIndex, lineColor){
   stock <- as.zoo(ccStocksReturns[,stock])
+  #stock <- window(x = stock, start = startDate, end = endDate)
   marketIndex <- as.zoo(ccIndexReturns[,marketIndex])
+  #marketIndex <- window(x = marketIndex, start = startDate, end = endDate)
   stock_betas <- NULL # time series to save beta's values
-  length_period = (interval(start_date, end_date) %/% months(1)) # move time windows for beta value
+  length_period = (interval(startDateForecast, endDate) %/% months(1)) # move time windows for beta value
   delta_t <- 60
   for (i in (delta_t+1):length_period){
     # Beta value
@@ -175,26 +180,21 @@ betaPlot <- function(stock, marketIndex, lineColor){
       stock_betas <- rbind(stock_betas, beta_xts)
     }
   }
-  print(paste("Media:",mean(na.omit(stock_betas))))
+  # print(paste("Media:",mean(na.omit(stock_betas))))
   stock_betas <- as.xts(c(rep(NA,delta_t), as.numeric(stock_betas)), order.by = index(stock))
   stock_betas_window <- window(stock_betas,
-                               start=(start_date+floor(round(delta_t*30.41, 0))), end=end_date)
+                               start=startDate, end=endDate)
   par(mfrow=c(1,1))
   grafico <- plot(stock_betas_window, main = paste(colnames(stock)[1], "Betas"),
        col = lineColor, xlab = "Date", ylab = "Beta Value")
   print(grafico)
-  # grafico <- (dygraph(stock_betas_window)%>%
-  #               dyRangeSelector(height = 40)%>%
-  #               dySeries("V1", label = paste(colnames(stock)[1], "BETA")) %>%
-  #               dyLegend(show = "always", hideOnMouseOut = TRUE))
-  # 
-  # print(grafico)
+  
 }
 
 getAllStats <- function(data){
   allStats <- matrix(NA, nrow=10, ncol=6)
   for(i in 1:dim(data)[2]){
-    allStats[1,i] = mean(data[,i])
+    allStats[1,i] = mean(data[,i]*1000)
     allStats[2,i] = var(data[,i])[1]
     allStats[3,i] = sd(data[,i])
     allStats[4,i] = skewness(data[,i])
@@ -204,7 +204,7 @@ getAllStats <- function(data){
     }
   }
   
-  rownames(allStats) <- c("Mean", "Variance", "Standard Deviation", "Skewness",
+  rownames(allStats) <- c("Mean(%)", "Variance", "Standard Deviation", "Skewness",
                           "Kurtosis", "0%", "25%", "50%", "75%", "100%")
   colnames(allStats) <- stocks
   return(allStats)
@@ -213,6 +213,7 @@ getAllStats <- function(data){
 #Compute all descriptive statistics into one matrix
 #Mean,Variance,Standard deviation, Skewness, Kurtosis and Quantile
 printUnivariateStatistics <- function(stockData){
+  stockData <- window(x = stockData, start = startDate, end = endDate)
   print(getAllStats(stockData)[1:5,])
 }
 
@@ -220,6 +221,7 @@ printUnivariateStatistics <- function(stockData){
 showDiagnosticPlots <- function(stockData, primaryLineColors, secondaryLineColors){
   stockData <- ccStocksReturns[,stockData]
   allStats <- getAllStats(stockData)
+  stockData <- window(x = stockData, start = startDate, end = endDate)
   
   for(i in 1:dim(stockData)[2]){
     layout(matrix(c(1,2,3,4), ncol=2, nrow = 2), heights = c(8,7))
@@ -257,6 +259,7 @@ showDiagnosticPlots <- function(stockData, primaryLineColors, secondaryLineColor
 #Plot correlation of all stocks
 plotCorrelationPairs <- function(stockData){
   stockData <- ccStocksReturns[,stockData]
+  stockData <- window(x = stockData, start = startDate, end = endDate)
   stocksCorrelation <- matrix(NA, nrow=dim(stockData)[1], ncol=dim(stockData)[2])
   colnames(stocksCorrelation) <- colnames(stockData)
   for(i in 1:dim(stockData)[2]){
@@ -271,15 +274,15 @@ arimaForecast <- function(stock, trainingSet, testSet){
   stock <- as.zoo(ccStocksReturns[,stock])
   returnsTrain <- as.zoo(stock[1:trainingSet])  # Train dataset 90%
   returnsTest <- as.zoo(stock[(trainingSet+1):(trainingSet+testSet)])   # Test dataset 10%
-  fit <- arima(returnsTrain, order = c(12,0,14))
-  arma_forecast <- forecast(fit, h = testSet, level = c(95,80))
+  fit <- arima(returnsTrain, order = c(13,0,15))
+  armaForecast <- forecast(fit, h = testSet, level = c(95,80))
   par(mfrow=c(1,1))
-  plot(arma_forecast, main = paste("ARMA forecasts for", colnames(stock),  "returns"))
+  plot(armaForecast, main = paste("ARMA forecasts for", colnames(stock),  "returns"))
   legend("topleft", c("Real","Predict"), col=c("black", "deepskyblue3"), lty=1, lwd = 3 ,title = "Data")
   lines(returnsTest)
   # print("Accuracy:")
-  # print(accuracy(arma_forecast, returnsTest) )
-  # print(accuracy(arma_forecast, returnsTest)[2])
+  # print(accuracy(armaForecast, returnsTest) )
+  # print(accuracy(armaForecast, returnsTest)[2])
 }
 
 # Portfolio Optimization 
@@ -307,7 +310,7 @@ userPortfolioOptimization <- function(stockNames){
 }
 
 getPortfolioWeigths <- function(budget, stockNames){
-  dateEnd <- end_date-2
+  dateEnd <- endDate-2
   stockReturns <- simpleStocksReturnsYear[,stockNames]
   Mop <- portfolio.optim( x=stockReturns)
   stockAdj <- mergedStocksAdj[,stockNames]
@@ -320,7 +323,7 @@ getPortfolioWeigths <- function(budget, stockNames){
     x <- paste(colnames(stockReturns)[i], ":", shares[i], "quote a:",
                 round(as.numeric(stockAdj[dateEnd, i]),3), "$ con una spesa di:", spesa[i], "$")
     y <- paste("Il peso di", colnames(stockReturns)[i], "nel portafoglio è di:",
-                round(Mop$pw[i], 3), "%")
+                round(Mop$pw[i], 3))
     z <- "------------------------------------------------------------------"
     stockInfo[i] <- paste("", x, y, z, sep="\n", collapse ="\n")
   }
@@ -333,25 +336,23 @@ getPortfolioWeigths <- function(budget, stockNames){
   e <- paste("Su ", budget, "$ di investimento il ritorno reale è di:", round((Mop$pm*0.99),3)*budget+budget, "$")
   portfolioReturns <- paste("", a, b, c, d, e, "", sep="\n")
   stockInfo <- c(stockInfo, portfolioReturns)
-  cat(stockInfo)
   return(stockInfo)
 }
 
 # dev.off()
 # plotSimpleCCReturns(stocks, stocks, arrayColors)
-# plotCCReturns(ccStocksReturns)
 # printCovariance(ccStocksReturns)
 # plotCorrelationData(stocks)
 # printUnivariateStatistics(ccStocksReturns)
 # for(i in 1:length(stocks)){
-#   betaPlot(stocks[i], "NASDAQ", arrayColors)
-#   plotStockIndex(stocks[i], "NASDAQ", arrayColors)
+#   betaPlot(stocks[i], "NASDAQ", arrayColors[i])
+#   plotStockIndex(stocks[i], "NASDAQ", arrayColors[i])
 #   showDiagnosticPlots(stocks[i], arrayColors[i], complementaryColors[i])
 #   arimaForecast(stocks[i], 80, 30)
 # }
 # plotCorrelationPairs(stocks)
-# x <- c("PEP", "ALGT", "AMD", "NVDA")
-# userPortfolioOptimization(x, 1000)
+# userPortfolioOptimization(stocks)
+# cat(getPortfolioWeigths(10000, stocks))
 
 source("./server.R")
 source("./ui.R")
